@@ -1,4 +1,4 @@
-from Artemisa.Extractor.excel import ExcelExtractor
+from Artemisa.Extractor import ExcelExtractor
 from Artemisa.Llm.providers.openai import OpenAIAgent
 from api_key import OPENAI_API_KEY
 from rich.console import Console

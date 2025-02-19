@@ -1,6 +1,6 @@
-from Artemisa.Extractor.excel import ExcelExtractor
-from Artemisa.Extractor.word import DocxExtractor
-from Artemisa.Extractor.pptx import PPTXExtractor
+from Artemisa.Extractor import ExcelExtractor
+from Artemisa.Extractor import DocxExtractor
+from Artemisa.Extractor import PPTXExtractor
 
 excel = ExcelExtractor('Cierre-Octubre.xlsx')
 
