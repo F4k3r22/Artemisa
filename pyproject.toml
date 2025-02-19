@@ -1,6 +1,6 @@
 [project]
 name = "Artemisa"
-version = "0.1.5"
+version = "0.1.6"
 description = "Sistema de extración de información de documentos"
 authors = [
     { name = "Rivera.ai/Fredy Rivera", email = "riveraaai200678@gmail.com" }
@@ -13,7 +13,9 @@ dependencies = [
     "python-pptx", 
     "pdfplumber",
     "openai",
-    "huggingface_hub"
+    "huggingface_hub",
+    "transformers",
+    "ollama"
 ]
 
 [build-system]
