@@ -1,0 +1,23 @@
+[project]
+name = "Artemisa"
+version = "0.1.0"
+description = "Sistema de extración de información de documentos"
+authors = [
+    { name = "Rivera.ai/Fredy Rivera", email = "riveraaai200678@gmail.com" }
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pandas", 
+    "openpyxl", 
+    "python-docx", 
+    "python-pptx", 
+    "pdfplumber",
+    "openai"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["Artemisa"]
