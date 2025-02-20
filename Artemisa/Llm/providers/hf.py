@@ -1,61 +1,54 @@
 from huggingface_hub import InferenceClient
 
-class DeepSeekR1Qwen32B:
-    def __init__(self, API_KEY_HF, max_tokens=None, stream=False):
+class HugginFaceClient:
+    def __init__(self, API_KEY_HF, model, provider, max_tokens=None, stream=False):
+
         self.api_key = API_KEY_HF
+        self.model = model
         self.max_tokens = max_tokens if max_tokens is not None else 1500
         self.stream = stream
+        self.provider = provider
         self.client = InferenceClient(
-            provider="hf-inference",
+            provider=self.provider,
             api_key=self.api_key
         )
 
-    def queryR1Qwen(self, query: str):
-        # Si stream está activado, usamos el método de streaming
+    def query(self, query: str, system_prompt: str):
+
         if self.stream:
-            return self.queryR1QwenStream(query)
-        
+            return self.queryStream(query, system_prompt)
+
+        query = query
+        system_prompt = system_prompt
         try:
-            messages = [
-                {
-                    "role": "user",
-                    "content": query
-                }
-            ]
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": query})
 
             completion = self.client.chat.completions.create(
-                model="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", 
+                model=self.model, 
                 messages=messages, 
                 max_tokens=self.max_tokens,
             )
 
-            
             return completion.choices[0].message
-            
+
         except Exception as e:
             print(f"Error al procesar la consulta: {str(e)}")
             return None
-
-    def queryR1QwenStream(self, query: str):
-        """
-        Realiza una consulta al modelo usando streaming
         
-        Args:
-            query (str): La consulta a realizar
-            
-        Yields:
-            str: Fragmentos de la respuesta
-        """
+    def queryStream(self, query: str, system_prompt: str):
+        query = query
+        system_prompt = system_prompt
         try:
-            messages = [
-                {
-                    "role": "user",
-                    "content": query
-                }
-            ]
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": query})
 
             stream = self.client.chat.completions.create(
-                model="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", 
+                model=self.model, 
                 messages=messages, 
                 max_tokens=self.max_tokens,
                 stream=True
@@ -67,4 +60,4 @@ class DeepSeekR1Qwen32B:
 
         except Exception as e:
             print(f"Error en el streaming: {str(e)}")
-            yield None
+            return None

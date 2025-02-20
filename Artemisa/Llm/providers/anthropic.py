@@ -28,6 +28,40 @@ class AnthropicAgent:
                 messages.append({"role": "system", "content": system_prompt})
             messages.append({"role": "user", "content": query})
 
+            response = client.messages.create(
+                max_tokens=self.max_tokens,
+                messages=messages,
+                model=self.llm_model
+            )
+
+            return response.content
+
         except Exception as e:
             print(f"Error al procesar la consulta: {str(e)}")
             return None
+        
+    def queryStream(self, query: str, system_prompt = None):
+
+        query = query
+        system_prompt = system_prompt
+        client = Anthropic(api_key=self.api_key)
+        try:
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": query})
+
+            stream = client.messages.create(
+                max_tokens=self.max_tokens,
+                messages=messages,
+                model=self.llm_model,
+                stream=True
+            )
+
+            for chunk in stream:
+                if chunk.type is not None:
+                    yield chunk.type
+
+        except Exception as e:
+            print(f"Error en el streaming: {str(e)}")
+            yield None
