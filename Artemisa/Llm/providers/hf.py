@@ -13,7 +13,7 @@ class HugginFaceClient:
             api_key=self.api_key
         )
 
-    def query(self, query: str, system_prompt: str):
+    def query(self, query: str, system_prompt = None):
 
         if self.stream:
             return self.queryStream(query, system_prompt)
@@ -38,7 +38,7 @@ class HugginFaceClient:
             print(f"Error al procesar la consulta: {str(e)}")
             return None
         
-    def queryStream(self, query: str, system_prompt: str):
+    def queryStream(self, query: str, system_prompt=None):
         query = query
         system_prompt = system_prompt
         try:
