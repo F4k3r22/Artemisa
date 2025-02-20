@@ -18,6 +18,9 @@ class AnthropicAgent:
             self.max_tokens = 1500
 
     def query(self, query: str, system_prompt = None):
+
+        if self.stream:
+            return self.queryStream(query, system_prompt)
         
         query = query
         system_prompt = system_prompt

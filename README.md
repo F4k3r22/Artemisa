@@ -25,6 +25,14 @@ El módulo ofrece una compatibilidad muy buena con el proveedor de HuggingFace c
 
 El módulo ofrece compatibilidad muy buena con el proveedor de Google Gemini y sus modelos no razonadores. Aún no se ha probado la implementación con los modelos razonadores de Gemini.
 
+#### HuggingFaceClient
+
+El módulo ofrece compatibilidad muy buena con el proveedor de HuggingFace y sus modelos de generación de texto, tome en cuenta que hay modelos que necesitan ser usuario Pro para acceder desde la API.
+
+#### Anthropic
+
+El módulo ofrece una compatibilidad limitada debido a la falta de pruebas exhaustivas con la API de Anthropic.
+
 ### Uso local con Ollama
 
 La primera versión estable del uso local con Ollama esta disponible y si quiere saber como se usa ve a la carpeta `test` y archivo `ollamatest.py`, toma en cuenta todos los comentarios que dejamos, para que puedas tener una ejecución optima de tus query's
