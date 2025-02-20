@@ -15,6 +15,7 @@ dependencies = [
     "openai",
     "huggingface_hub",
     "google-genai",
+    "anthropic",
     "ollama"
 ]
 
