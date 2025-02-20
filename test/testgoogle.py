@@ -1,6 +1,6 @@
-from Artemisa.Extractor import ExcelExtractor
-from Artemisa.Llm.providers import OpenAIAgent
-from api_key import OPENAI_API_KEY
+from Artemisa.Llm.providers import GoogleAPI
+from Artemisa.Extractor.excel import ExcelExtractor
+from api_key import GOOGLE_API
 from rich.console import Console
 from rich.markdown import Markdown
 
@@ -17,15 +17,13 @@ def print_response(response):
 
 excel = ExcelExtractor('Cierre-Octubre.xlsx')
 
-output_file, content =excel.excel()
+output_file, content = excel.excel()
 
-client = OpenAIAgent(OPENAI_API_KEY)
-
-print('Haciendo query al agente')
+print('Iniciando query a Gemini')
+client = GoogleAPI(GOOGLE_API)
 
 query = f'Oye que opinas de los gastos de esta empresa estudiantil, y que mejoras se pueden hacer?, datos: {content}'
 
-response = client.query(query=query, format_response=True)
-
+response = client.query(query=query)
 
 print_response(response)

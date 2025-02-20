@@ -21,6 +21,10 @@ Aún se esta trabajando en aportar mayor compatibilidad entre más modelos de Op
 
 El módulo ofrece una compatibilidad muy buena con el proveedor de HuggingFace con el modelo `DeepSeek-R1-Distill-Qwen-32B` (Solo estara disponible mientras HuggingFace provea su HF Inference API gratuita)
 
+#### Gemini
+
+El módulo ofrece compatibilidad muy buena con el proveedor de Google Gemini y sus modelos no razonadores. Aún no se ha probado la implementación con los modelos razonadores de Gemini.
+
 ### Uso local con Ollama
 
 La primera versión estable del uso local con Ollama esta disponible y si quiere saber como se usa ve a la carpeta `test` y archivo `ollamatest.py`, toma en cuenta todos los comentarios que dejamos, para que puedas tener una ejecución optima de tus query's

@@ -1,5 +1,5 @@
 from Artemisa.Extractor.excel import ExcelExtractor
-from Artemisa.Llm.providers.deep_seek_hf import DeepSeekR1Qwen32B
+from Artemisa.Llm.providers import DeepSeekR1Qwen32B
 from api_key import HF_API_KEY
 
 excel = ExcelExtractor('Cierre-Octubre.xlsx')
