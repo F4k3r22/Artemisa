@@ -15,6 +15,9 @@ class TransformersLocal:
 
     def queryModel(self, query: str, system_prompt = None):
         """ Acepta modelos tipo no Razonador que permite usar SystemPrompt """
+        tokenizer = AutoTokenizer.from_pretrained(self.tokenizer)
+        model = AutoModelForCausalLM.from_pretrained(self.model)
+        
         pass
 
     def queryModelR1(self, query: str):

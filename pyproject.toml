@@ -1,6 +1,6 @@
 [project]
 name = "Artemisa"
-version = "0.1.6"
+version = "0.1.8"
 description = "Sistema de extración de información de documentos"
 authors = [
     { name = "Rivera.ai/Fredy Rivera", email = "riveraaai200678@gmail.com" }
