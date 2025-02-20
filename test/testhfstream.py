@@ -1,5 +1,5 @@
 from Artemisa.Extractor.excel import ExcelExtractor
-from Artemisa.Llm.providers import HugginFaceClient
+from Artemisa.Llm.providers import HuggingFaceClient
 from api_key import HF_API_KEY
 
 excel = ExcelExtractor('Cierre-Octubre.xlsx')
@@ -7,7 +7,7 @@ excel = ExcelExtractor('Cierre-Octubre.xlsx')
 output_file, content = excel.excel()
 
 print('Iniciando query a HugginFaceClient')
-client = HugginFaceClient(HF_API_KEY, 'mistralai/Mistral-7B-Instruct-v0.3', 'hf-inference', max_tokens=4500, stream=True)
+client = HuggingFaceClient(HF_API_KEY, 'mistralai/Mistral-7B-Instruct-v0.3', 'hf-inference', max_tokens=4500, stream=True)
 
 query = f'Oye que opinas de los gastos de esta empresa estudiantil, y que mejoras se pueden hacer?, datos: {content}'
 

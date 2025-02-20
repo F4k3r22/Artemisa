@@ -1,6 +1,6 @@
 from huggingface_hub import InferenceClient
 
-class HugginFaceClient:
+class HuggingFaceClient:
     def __init__(self, API_KEY_HF, model, provider, max_tokens=None, stream=False):
 
         self.api_key = API_KEY_HF
