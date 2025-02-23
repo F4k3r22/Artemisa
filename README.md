@@ -9,7 +9,7 @@ Artemisa proporciona una interfaz unificada para extraer y analizar contenido de
 ## Estructura del Proyecto
 
 ```
-artemisa/
+Artemisa/
 ├── test/           # Ejemplos y documentación de uso
 │   └── ollamatest.py   # Guía de implementación con Ollama
 └── ...
