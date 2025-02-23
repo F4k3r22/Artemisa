@@ -1,0 +1,1 @@
+from .deepresearcher import DeepResearcher as DeepResearcherOnline
