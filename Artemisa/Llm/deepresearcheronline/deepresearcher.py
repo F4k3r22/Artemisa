@@ -20,18 +20,34 @@ def GenerateQuery(state: SummaryState, config: RunnableConfig):
         query_writer_instructions_formatted
         
     )
-    query = json.loads(result.content)
+    query = json.loads(result)
 
-    return {"search_query": query['query']}
+    return {"search_query": query}
 
 def WebResearch(state: SummaryState, config: RunnableConfig):
-
     configurable = Configuration.from_runnable_config(config)
 
+    # Obtener resultados de búsqueda
     search_results = SearchEngine(state.search_query, num_search=3, fetch_full_page=configurable.fetch_full_page)
-    search_str = deduplicate_and_format_sources(search_results, max_tokens_per_source=1000, include_raw_content=True)
+    
+    # Limpiar los resultados si son un diccionario
+    if isinstance(search_results, dict):
+        cleaned_results = {url: clean_text(content) for url, content in search_results.items()}
+    # Si es una lista de resultados
+    elif isinstance(search_results, list):
+        cleaned_results = [clean_text(result) if isinstance(result, str) else result for result in search_results]
+    else:
+        # Si es un string
+        cleaned_results = clean_text(search_results)
 
-    return {"sources_gathered": [format_sources(search_results)], "research_loop_count": state.research_loop_count + 1, "web_research_results": [search_str]}
+    # Formatear los resultados limpios
+    search_str = deduplicate_and_format_sources(cleaned_results, max_tokens_per_source=1000, include_raw_content=True)
+
+    return {
+        "sources_gathered": [format_sources(cleaned_results)], 
+        "research_loop_count": state.research_loop_count + 1, 
+        "web_research_results": [search_str]
+    }
 
 def SummarizeSources(state: SummaryState, config: RunnableConfig):
     """ Summarize the gathered sources """
@@ -64,7 +80,7 @@ def SummarizeSources(state: SummaryState, config: RunnableConfig):
         
     )
 
-    running_summary = result.content
+    running_summary = result
 
     # TODO: This is a hack to remove the <think> tags w/ Deepseek models
     # It appears very challenging to prompt them out of the responses
@@ -79,22 +95,82 @@ def ReflectOnSummary(state: SummaryState, config: RunnableConfig):
     """ Reflect on the summary and generate a follow-up query """
     configurable = Configuration.from_runnable_config(config)
     llm_json_mode = OllamaLocal(model=configurable.local_llm, format="json")
-    result = llm_json_mode.query(
-        f"Identify a knowledge gap and generate a follow-up web search query based on our existing knowledge: {state.running_summary}",
-        reflection_instructions.format(research_topic=state.research_topic)
-    )
+    
+    # Modificar el prompt para ser más específico sobre el formato JSON requerido
+    prompt = f"""Generate a follow-up web search query based on the existing knowledge: {state.running_summary}
 
-    follow_up_query = json.loads(result.content)
-
-    query = follow_up_query.get('follow_up_query')
-
-    if not query:
-
-        # Fallback to a placeholder query
+    IMPORTANT: Respond ONLY with a valid JSON object in this exact format:
+    {{
+        "follow_up_query": "your query here"
+    }}
+    
+    Research topic: {state.research_topic}
+    """
+    
+    try:
+        result = llm_json_mode.query(prompt, reflection_instructions.format(research_topic=state.research_topic))
+        
+        # Debug: ver qué está devolviendo el LLM
+        print("Debug - LLM result:", result)
+        
+        # Limpiar y validar el JSON
+        result = result.strip()
+        if not (result.startswith('{') and result.endswith('}')):
+            # Buscar el JSON en la respuesta
+            start = result.find('{')
+            end = result.rfind('}') + 1
+            if start >= 0 and end > 0:
+                result = result[start:end]
+        
+        # Intentar parsear el JSON
+        try:
+            follow_up_query = json.loads(result)
+        except json.JSONDecodeError as e:
+            print(f"JSON parse error: {e}")
+            print("Failed to parse:", result)
+            return {"search_query": f"Tell me more about {state.research_topic}"}
+        
+        query = follow_up_query.get('follow_up_query')
+        
+        if not query:
+            return {"search_query": f"Tell me more about {state.research_topic}"}
+            
+        return {"search_query": query}
+        
+    except Exception as e:
+        print(f"Error in ReflectOnSummary: {e}")
+        # Fallback seguro
         return {"search_query": f"Tell me more about {state.research_topic}"}
 
-    # Update search query with follow-up query
-    return {"search_query": follow_up_query['follow_up_query']}
+def clean_text(text: str) -> str:
+    """Limpia y normaliza el texto de la búsqueda"""
+    try:
+        # Decodificar caracteres especiales
+        text = text.encode('latin1').decode('utf-8')
+    except:
+        try:
+            # Si falla el primer método, intentar con otra codificación
+            text = text.encode('utf-8').decode('utf-8')
+        except:
+            pass
+    
+    # Reemplazar secuencias problemáticas comunes
+    replacements = {
+        'Â\xa0': ' ',  # Espacio no rompible
+        '\xa0': ' ',   # Espacio no rompible
+        '\n': ' ',     # Saltos de línea
+        '\t': ' ',     # Tabulaciones
+        '  ': ' '      # Espacios dobles
+    }
+    
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    # Eliminar espacios múltiples
+    while '  ' in text:
+        text = text.replace('  ', ' ')
+    
+    return text.strip()
 
 def FinalizeSummary(state: SummaryState):
     """ Finalize the summary """
