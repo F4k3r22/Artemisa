@@ -66,6 +66,7 @@ class Configuration:
     local_llm: str = "deepseek-r1"
     search_api = SearchEngine 
     fetch_full_page: bool = False  # Default to False
+    local: bool = True # Default to True
     llm_model: str = "gpt-4o-mini"
     provider: str = "openai"
     max_tokens: int = 1000
