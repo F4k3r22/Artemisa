@@ -21,6 +21,11 @@ class Configuration:
     local_llm: str = "deepseek-r1"
     search_api = LocalSearchEngine 
     path : str
+    local: bool = True
+    llm_model: str = "gpt-4o-mini"
+    provider: str = "openai"
+    max_tokens: int = 1000
+    sub_provider_hf: str = "hf-inference"
     
     @classmethod
     def from_runnable_config(
