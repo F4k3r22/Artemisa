@@ -15,9 +15,9 @@ def GenerateQuery(state: SummaryState, config: RunnableConfig):
 
     # Generate a query
     configurable = Configuration.from_runnable_config(config)
-    if configurable.local == False:
+    if configurable.local_model == False:
         if configurable.provider == "openai":
-            llm_json_mode = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens, format="json_object")
+            llm_json_mode = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
         elif configurable.provider == "hf":
             llm_json_mode = HuggingFaceClient(API_KEY_HF=configurable.Api_key, model=configurable.llm_model, provider=configurable.sub_provider_hf, max_tokens=configurable.max_tokens)
         elif configurable.provider == "deepseek_hf":
@@ -33,7 +33,22 @@ def GenerateQuery(state: SummaryState, config: RunnableConfig):
         query_writer_instructions_formatted
         
     )
-    query = json.loads(result)
+    if isinstance(result, str):
+        query = json.loads(result)
+    else:
+    # Si es un objeto ChatCompletionOutputMessage
+    # (Asumiendo que tiene un atributo content o message)
+        try:
+        # Intenta acceder al contenido del mensaje
+            if hasattr(result, 'content'):
+                query = result.content
+            elif hasattr(result, 'message'):
+                query = result.message
+            else:
+            # Fallback: convertir a string y esperar que sea un formato válido
+                query = str(result)
+        except Exception as e:
+            print(f"Error procesando resultado: {e}")
 
     return {"search_query": query}
 
@@ -86,7 +101,7 @@ def SummarizeSources(state: SummaryState, config: RunnableConfig):
 
     # Run the LLM
     configurable = Configuration.from_runnable_config(config)
-    if configurable.local == False:
+    if configurable.local_model == False:
         if configurable.provider == "openai":
             llm = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens,)
         elif configurable.provider == "hf":
@@ -119,9 +134,9 @@ def SummarizeSources(state: SummaryState, config: RunnableConfig):
 def ReflectOnSummary(state: SummaryState, config: RunnableConfig):
     """ Reflect on the summary and generate a follow-up query """
     configurable = Configuration.from_runnable_config(config)
-    if configurable.local == False:
+    if configurable.local_model == False:
         if configurable.provider == "openai":
-            llm_json_mode = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens, format="json_object")
+            llm_json_mode = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
         elif configurable.provider == "hf":
             llm_json_mode = HuggingFaceClient(API_KEY_HF=configurable.Api_key, model=configurable.llm_model, provider=configurable.sub_provider_hf, max_tokens=configurable.max_tokens)
         elif configurable.provider == "deepseek_hf":
@@ -151,6 +166,19 @@ def ReflectOnSummary(state: SummaryState, config: RunnableConfig):
         print("Debug - LLM result:", result)
         
         # Limpiar y validar el JSON
+        if hasattr(result, 'choices') and hasattr(result.choices[0], 'message'):
+            # Para respuestas de OpenAI
+            result = result.choices[0].message.content
+        elif hasattr(result, 'content'):
+            # Para algunos tipos de respuesta
+            result = result.content
+        elif isinstance(result, str):
+            # Si ya es una cadena
+            result = result
+        else:
+            # Último recurso
+            result = str(result)
+
         result = result.strip()
         if not (result.startswith('{') and result.endswith('}')):
             # Buscar el JSON en la respuesta
