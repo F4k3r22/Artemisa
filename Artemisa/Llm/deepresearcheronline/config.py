@@ -64,8 +64,12 @@ def SearchEngine(query, num_search=10, search_time_limit=30, fetch_full_page: bo
 class Configuration:
     max_web_research_loops: int = 3
     local_llm: str = "deepseek-r1"
-    search_api = SearchEngine # Default to DUCDUCKGO
+    search_api = SearchEngine 
     fetch_full_page: bool = False  # Default to False
+    llm_model: str = "gpt-4o-mini"
+    provider: str = "openai"
+    max_tokens: int = 1000
+    sub_provider_hf: str = "hf-inference"
     
     @classmethod
     def from_runnable_config(
