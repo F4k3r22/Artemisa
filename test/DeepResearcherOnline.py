@@ -25,6 +25,21 @@ config = {
     "fetch_full_page": True       # Activar la descarga completa de páginas
 }
 
+# Si pones como "local" : False, tienes que tomar en cuenta que providers y modelos disponibles hay
+# Pon la API key del proveedor que vayas a usar en Api_key
+# Ejemplos de config
+# "llm_model" : "gpt-4o-mini"
+# "provider" : "openai"
+# "max_tokens" = 1000
+# "sub_provider_hf" : "hf-inference" Este solo si vas a usar HuggingFace
+
+# Providers disponible:
+# Proveedor / Alias
+# OpenAI = openai
+# HuggingFace = hf
+# deepseek en HuggingFace = deepseek_hf
+# Google o gemini = googleapi
+# Anthropic = anthropic
 
 result = DeepResearcherOnline.invoke(input=input_data, config=config)
 
