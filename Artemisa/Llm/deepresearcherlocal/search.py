@@ -1,0 +1,38 @@
+from Artemisa.Indexer import LocalDocumentIndexer
+from typing import Dict, Optional, Any
+import os
+from langchain_core.runnables import RunnableConfig
+from dataclasses import dataclass, fields
+
+class LocalSearchEngine:
+    def __init__(self, index_path: str):
+        self.indexer = LocalDocumentIndexer(index_path)
+
+    def search(self, query: str, num_search: int = 3) -> Dict[str, str]:
+        results = self.indexer.search(query, limit=num_search)
+        return {
+            doc["path"]: doc["content"] 
+            for doc in results
+        }
+
+@dataclass(kw_only=True)
+class Configuration:
+    max_web_research_loops: int = 3
+    local_llm: str = "deepseek-r1"
+    search_api = LocalSearchEngine 
+    path : str
+    
+    @classmethod
+    def from_runnable_config(
+        cls, config: Optional[RunnableConfig] = None
+    ) -> "Configuration":
+        """Create a Configuration instance from a RunnableConfig."""
+        configurable = (
+            config["configurable"] if config and "configurable" in config else {}
+        )
+        values: dict[str, Any] = {
+            f.name: os.environ.get(f.name.upper(), configurable.get(f.name))
+            for f in fields(cls)
+            if f.init
+        }
+        return cls(**{k: v for k, v in values.items() if v})
