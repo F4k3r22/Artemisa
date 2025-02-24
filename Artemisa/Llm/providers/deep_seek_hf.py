@@ -1,7 +1,7 @@
 from huggingface_hub import InferenceClient
 
 class DeepSeekR1Qwen32B:
-    def __init__(self, API_KEY_HF, max_tokens=None, stream=False):
+    def __init__(self, API_KEY_HF, max_tokens=None, stream=False, format=None):
         self.api_key = API_KEY_HF
         self.max_tokens = max_tokens if max_tokens is not None else 1500
         self.stream = stream
@@ -9,6 +9,7 @@ class DeepSeekR1Qwen32B:
             provider="hf-inference",
             api_key=self.api_key
         )
+        self.format = format
 
     def queryR1Qwen(self, query: str):
         # Si stream está activado, usamos el método de streaming
@@ -27,6 +28,7 @@ class DeepSeekR1Qwen32B:
                 model="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", 
                 messages=messages, 
                 max_tokens=self.max_tokens,
+                response_format=self.format
             )
 
             
@@ -58,7 +60,8 @@ class DeepSeekR1Qwen32B:
                 model="deepseek-ai/DeepSeek-R1-Distill-Qwen-32B", 
                 messages=messages, 
                 max_tokens=self.max_tokens,
-                stream=True
+                stream=True,
+                response_format=self.format
             )
 
             for chunk in stream:

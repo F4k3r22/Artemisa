@@ -5,6 +5,7 @@ from .utils import *
 from langchain_core.runnables import RunnableConfig
 from langgraph.graph import START, END, StateGraph
 from Artemisa.Llm.local import OllamaLocal
+from Artemisa.Llm.providers import *
 from typing_extensions import Literal
 import json
 
@@ -14,7 +15,19 @@ def GenerateQuery(state: SummaryState, config: RunnableConfig):
 
     # Generate a query
     configurable = Configuration.from_runnable_config(config)
-    llm_json_mode = OllamaLocal(model=configurable.local_llm, format="json")
+    if configurable.local == False:
+        if configurable.provider == "openai":
+            llm_json_mode = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens, format="json_object")
+        elif configurable.provider == "hf":
+            llm_json_mode = HuggingFaceClient(API_KEY_HF=configurable.Api_key, model=configurable.llm_model, provider=configurable.sub_provider_hf, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "deepseek_hf":
+            llm_json_mode = DeepSeekR1Qwen32B(API_KEY_HF=configurable.Api_key, max_tokens=configurable.max_tokens, format="json")
+        elif configurable.provider == "googleapi":
+            llm_json_mode = GoogleAPI(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "anthropic":
+            llm_json_mode = AnthropicAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
+    else:
+        llm_json_mode = OllamaLocal(model=configurable.local_llm, format="json")
     result = llm_json_mode.query(
         f"Generate a query for web search:",
         query_writer_instructions_formatted
@@ -73,7 +86,19 @@ def SummarizeSources(state: SummaryState, config: RunnableConfig):
 
     # Run the LLM
     configurable = Configuration.from_runnable_config(config)
-    llm = OllamaLocal(model=configurable.local_llm,)
+    if configurable.local == False:
+        if configurable.provider == "openai":
+            llm = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens,)
+        elif configurable.provider == "hf":
+            llm = HuggingFaceClient(API_KEY_HF=configurable.Api_key, model=configurable.llm_model, provider=configurable.sub_provider_hf, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "deepseek_hf":
+            llm = DeepSeekR1Qwen32B(API_KEY_HF=configurable.Api_key, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "googleapi":
+            llm = GoogleAPI(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "anthropic":
+            llm = AnthropicAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
+    else:
+        llm = OllamaLocal(model=configurable.local_llm,)
     result = llm.query(
         human_message_content,
         summarizer_instructions
@@ -94,7 +119,19 @@ def SummarizeSources(state: SummaryState, config: RunnableConfig):
 def ReflectOnSummary(state: SummaryState, config: RunnableConfig):
     """ Reflect on the summary and generate a follow-up query """
     configurable = Configuration.from_runnable_config(config)
-    llm_json_mode = OllamaLocal(model=configurable.local_llm, format="json")
+    if configurable.local == False:
+        if configurable.provider == "openai":
+            llm_json_mode = OpenAIAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens, format="json_object")
+        elif configurable.provider == "hf":
+            llm_json_mode = HuggingFaceClient(API_KEY_HF=configurable.Api_key, model=configurable.llm_model, provider=configurable.sub_provider_hf, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "deepseek_hf":
+            llm_json_mode = DeepSeekR1Qwen32B(API_KEY_HF=configurable.Api_key, max_tokens=configurable.max_tokens, format="json")
+        elif configurable.provider == "googleapi":
+            llm_json_mode = GoogleAPI(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
+        elif configurable.provider == "anthropic":
+            llm_json_mode = AnthropicAgent(API_KEY=configurable.Api_key, llm_model=configurable.llm_model, max_tokens=configurable.max_tokens)
+    else:
+        llm_json_mode = OllamaLocal(model=configurable.local_llm, format="json")
     
     # Modificar el prompt para ser más específico sobre el formato JSON requerido
     prompt = f"""Generate a follow-up web search query based on the existing knowledge: {state.running_summary}

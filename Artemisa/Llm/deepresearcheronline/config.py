@@ -67,6 +67,7 @@ class Configuration:
     search_api = SearchEngine 
     fetch_full_page: bool = False  # Default to False
     local: bool = True # Default to True
+    Api_key: str = None
     llm_model: str = "gpt-4o-mini"
     provider: str = "openai"
     max_tokens: int = 1000

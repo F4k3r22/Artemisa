@@ -1,7 +1,7 @@
 from openai import OpenAI
 
 class OpenAIAgent:
-    def __init__(self, API_KEY, llm_model=None, max_tokens=None, stream=False):
+    def __init__(self, API_KEY, llm_model=None, max_tokens=None, stream=False, format=None):
         self.api_key = API_KEY
         if not API_KEY:
             raise ValueError("API_KEY es requerida")
@@ -15,6 +15,8 @@ class OpenAIAgent:
         
         if self.max_tokens is None:
             self.max_tokens = 1500
+
+        self.format = format # "json_object"
     
     def query(self, query: str, system_prompt = None, format_response=False):
 
@@ -34,6 +36,7 @@ class OpenAIAgent:
                 model=self.llm_model,
                 messages=messages,
                 max_tokens=self.max_tokens,
+                response_format=self.format
                 #stream=True,
                 #stream_options={"include_usage": True},
             )
