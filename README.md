@@ -18,7 +18,7 @@ Artemisa/
 ## Instalación via Pypi
 
 ```
-Instalación via Pypi
+pip install Artemisa
 ```
 
 ## Características Principales
