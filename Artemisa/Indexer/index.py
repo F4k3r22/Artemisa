@@ -241,7 +241,7 @@ class LocalDocumentIndexer:
                 file_path.name,
                 file_type,
                 extracted['content'],
-                json.dumps(extracted['metadata']),
+                json.dumps(extracted['metadata'], default=lambda obj: obj.isoformat() if isinstance(obj, datetime) else None),
                 datetime.fromtimestamp(file_path.stat().st_mtime),
                 datetime.now(),
                 checksum
