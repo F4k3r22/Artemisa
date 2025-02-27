@@ -3,18 +3,7 @@ from typing import Dict, Optional, Any
 import os
 from langchain_core.runnables import RunnableConfig
 from dataclasses import dataclass, fields
-
-class LocalSearchEngine:
-    def __init__(self, index_path: str):
-        self.indexer = LocalDocumentIndexer()
-        self.indexer.index_directory(index_path)
-
-    def search(self, query: str, num_search: int = 3) -> Dict[str, str]:
-        results = self.indexer.search(query, limit=num_search)
-        return {
-            doc["path"]: doc["content"] 
-            for doc in results
-        }
+from Artemisa import LocalSearchEngine
 
 @dataclass(kw_only=True)
 class Configuration:

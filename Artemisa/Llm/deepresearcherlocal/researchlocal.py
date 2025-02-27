@@ -8,6 +8,7 @@ from Artemisa.Llm.local import OllamaLocal
 from Artemisa.Llm.providers import *
 from typing_extensions import Literal
 import json
+from Artemisa import LocalSearchEngine
 
 def GenerateQuery(state: SummaryState, config: RunnableConfig):
 
@@ -61,7 +62,8 @@ def LocalResearch(state: SummaryState, config: RunnableConfig):
     
     # Limpiar los resultados si son un diccionario
     if isinstance(search_results, dict):
-        cleaned_results = {url: clean_text(content) for url, content in search_results.items()}
+        # Cambiado 'url' por 'path' en el comentario para mayor claridad
+        cleaned_results = {path: clean_text(content) for path, content in search_results.items()}
     # Si es una lista de resultados
     elif isinstance(search_results, list):
         cleaned_results = [clean_text(result) if isinstance(result, str) else result for result in search_results]

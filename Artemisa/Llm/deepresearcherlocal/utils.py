@@ -5,7 +5,15 @@ def deduplicate_and_format_sources(search_response, max_tokens_per_source, inclu
 
     # Convert input to list of results
     if isinstance(search_response, dict):
-        sources_list = search_response
+        # For LocalSearchEngine results, convert the dict to a list of dicts with path as url
+        sources_list = []
+        for path, content in search_response.items():
+            sources_list.append({
+                'url': path,  # Use path as url
+                'title': path.split('/')[-1],  # Use filename as title
+                'content': content,
+                'raw_content': content
+            })
     elif isinstance(search_response, list):
         sources_list = []
         for response in search_response:
@@ -14,9 +22,9 @@ def deduplicate_and_format_sources(search_response, max_tokens_per_source, inclu
             else:
                 sources_list.extend(response)
     else:
-        raise ValueError("Input must be either a dict with 'results', a list of search results, or a string")
+        raise ValueError("Input must be either a dict with paths as keys, a list of search results, or a string")
 
-    # Deduplicate by URL
+    # Deduplicate by path/URL
     unique_sources = {}
     for source in sources_list:
         # Si es un string, crear un diccionario con formato similar
@@ -40,7 +48,7 @@ def deduplicate_and_format_sources(search_response, max_tokens_per_source, inclu
     formatted_text = "Sources:\n\n"
     for i, source in enumerate(unique_sources.values(), 1):
         formatted_text += f"Source {source['title']}:\n===\n"
-        formatted_text += f"URL: {source['url']}\n===\n"
+        formatted_text += f"Path: {source['url']}\n===\n"  # Changed URL to Path
         formatted_text += f"Most relevant content from source: {source['content']}\n===\n"
         if include_raw_content:
             char_limit = max_tokens_per_source * 4
@@ -58,10 +66,10 @@ def format_sources(search_results):
     """Format search results into a bullet-point list of sources.
     
     Args:
-        search_results: Puede ser un diccionario, una lista de resultados, o un string
+        search_results: Puede ser un diccionario con rutas como claves, una lista de resultados, o un string
         
     Returns:
-        str: Formatted string with sources and their URLs
+        str: Formatted string with sources and their paths
     """
     # Si es un string
     if isinstance(search_results, str):
@@ -70,24 +78,33 @@ def format_sources(search_results):
     # Si es un diccionario o lista
     try:
         formatted_sources = []
+        # Si es un diccionario con rutas como claves (resultados de LocalSearchEngine)
+        if isinstance(search_results, dict) and not 'results' in search_results:
+            for path, content in search_results.items():
+                filename = path.split('/')[-1]
+                formatted_sources.append(f"* {filename} : {path}")
         # Si es una lista
-        if isinstance(search_results, list):
+        elif isinstance(search_results, list):
             sources = search_results
-        # Si es un diccionario
-        elif isinstance(search_results, dict):
-            sources = search_results.get('results', [search_results])
+            # Procesar cada fuente en la lista
+            for source in sources:
+                if isinstance(source, dict) and 'title' in source and 'url' in source:
+                    formatted_sources.append(f"* {source['title']} : {source['url']}")
+                elif isinstance(source, str):
+                    formatted_sources.append(f"* Content: {source}")
+                else:
+                    formatted_sources.append(f"* Source: {str(source)}")
+        # Si es un diccionario con 'results'
+        elif isinstance(search_results, dict) and 'results' in search_results:
+            sources = search_results.get('results', [])
+            for source in sources:
+                if isinstance(source, dict) and 'title' in source and 'url' in source:
+                    formatted_sources.append(f"* {source['title']} : {source['url']}")
+                else:
+                    formatted_sources.append(f"* Source: {str(source)}")
         else:
             return f"* Invalid format: {str(search_results)}"
             
-        # Procesar cada fuente
-        for source in sources:
-            if isinstance(source, dict) and 'title' in source and 'url' in source:
-                formatted_sources.append(f"* {source['title']} : {source['url']}")
-            elif isinstance(source, str):
-                formatted_sources.append(f"* Content: {source}")
-            else:
-                formatted_sources.append(f"* Source: {str(source)}")
-                
         return '\n'.join(formatted_sources)
         
     except Exception as e:
