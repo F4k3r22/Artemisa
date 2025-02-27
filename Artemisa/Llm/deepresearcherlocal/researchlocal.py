@@ -247,7 +247,7 @@ def FinalizeSummary(state: SummaryState):
     state.running_summary = f"## Summary\n\n{state.running_summary}\n\n ### Sources:\n{all_sources}"
     return {"running_summary": state.running_summary}
 
-def route_research(state: SummaryState, config: RunnableConfig) -> Literal["FinalizeSummary", "WebResearch"]:
+def route_research(state: SummaryState, config: RunnableConfig) -> Literal["FinalizeSummary", "LocalResearch"]:
     """ Route the research based on the follow-up query """
 
     configurable = Configuration.from_runnable_config(config)
