@@ -251,27 +251,69 @@ class LocalDocumentIndexer:
             conn.execute("INSERT OR REPLACE INTO document_index (id, content) VALUES (?, ?)",
                        (doc_id, extracted['content']))
             
-    def search(self, query: str, limit: int = 10) -> List[Dict]:
+    def search(self, query: str, limit: int = 10, fallback_to_words: bool = False) -> List[Dict]:
         """
         Busca documentos que coincidan con la consulta.
-        
+    
         Args:
             query: Texto a buscar
             limit: Número máximo de resultados
-            
+            fallback_to_words: Si es True y la búsqueda original no encuentra resultados,
+                          realiza búsquedas individuales con cada palabra
+        
         Returns:
             Lista de documentos que coinciden con la búsqueda
         """
+    
         with sqlite3.connect(self.db_path) as conn:
+            # Intentar primero con la consulta completa
             results = conn.execute("""
                 SELECT d.* 
                 FROM document_index i
                 JOIN documents d ON i.id = d.id
-                WHERE document_index MATCH ?
-                ORDER BY rank
+                WHERE i.content MATCH ?
+                ORDER BY d.last_modified DESC
                 LIMIT ?
             """, (query, limit)).fetchall()
+        
+            # Si no hay resultados y fallback_to_words está activado
+            if not results and fallback_to_words:
+                # Dividir la consulta en palabras individuales
+                words = [word.strip() for word in query.split() if len(word.strip()) > 2]
             
+                if words:
+                    # Conjunto para almacenar IDs únicos y evitar duplicados
+                    unique_ids = set()
+                    all_results = []
+                
+                    # Hacer una búsqueda individual por cada palabra
+                    for word in words:
+                        word_results = conn.execute("""
+                            SELECT d.* 
+                            FROM document_index i
+                            JOIN documents d ON i.id = d.id
+                            WHERE i.content MATCH ?
+                            ORDER BY d.last_modified DESC
+                        """, (word,)).fetchall()
+                    
+                        # Añadir solo resultados que no estén ya incluidos
+                        for row in word_results:
+                            if row[0] not in unique_ids:
+                                unique_ids.add(row[0])
+                                all_results.append(row)
+                            
+                                # Si alcanzamos el límite, detenemos la búsqueda
+                                if len(all_results) >= limit:
+                                    break
+                    
+                        # Si alcanzamos el límite, detenemos la búsqueda
+                        if len(all_results) >= limit:
+                            break
+                
+                    # Usar los resultados de las búsquedas por palabras
+                    results = all_results[:limit]
+        
+            # Procesar los resultados encontrados
             documents = []
             for row in results:
                 doc = {
@@ -285,9 +327,10 @@ class LocalDocumentIndexer:
                     "last_indexed": row[7]
                 }
                 documents.append(doc)
-                
+            
             return documents
             
+    
     def reindex_all(self):
         """Reindexa todos los documentos en la base de datos."""
         with sqlite3.connect(self.db_path) as conn:

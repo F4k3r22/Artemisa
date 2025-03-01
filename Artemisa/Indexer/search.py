@@ -6,8 +6,8 @@ class LocalSearchEngine:
         self.indexer = LocalDocumentIndexer()
         self.indexer.index_directory(index_path)
 
-    def search(self, query: str, num_search: int = 3) -> Dict[str, str]:
-        results = self.indexer.search(query, limit=num_search)
+    def search(self, query: str, num_search: int = 3, fallback_to_words = False) -> Dict[str, str]:
+        results = self.indexer.search(query, num_search, fallback_to_words)
         return {
             doc["path"]: doc["content"] 
             for doc in results

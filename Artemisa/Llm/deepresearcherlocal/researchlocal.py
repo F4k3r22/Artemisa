@@ -40,45 +40,86 @@ def GenerateQuery(state: SummaryState, config: RunnableConfig):
     # Si es un objeto ChatCompletionOutputMessage
     # (Asumiendo que tiene un atributo content o message)
         try:
-        # Intenta acceder al contenido del mensaje
-            if hasattr(result, 'content'):
-                query = result.content
+            if isinstance(result, str):
+                query_obj = json.loads(result)
+            elif hasattr(result, 'content'):
+                query_obj = json.loads(result.content)
             elif hasattr(result, 'message'):
-                query = result.message
+                query_obj = json.loads(result.message)
             else:
-            # Fallback: convertir a string y esperar que sea un formato válido
-                query = str(result)
+                query_obj = json.loads(str(result))
         except Exception as e:
             print(f"Error procesando resultado: {e}")
+            query_obj = {"query": state.research_topic}
+    
+        # Extraer solo el string de búsqueda real
+        search_query = query_obj.get("query", state.research_topic)
+        search_query = clean_text2(search_query)
 
-    return {"search_query": query}
+    print("Generated query:", search_query)
+
+    return {"search_query": search_query}
 
 def LocalResearch(state: SummaryState, config: RunnableConfig):
     configurable = Configuration.from_runnable_config(config)
 
-    search_local = LocalSearchEngine(configurable.path)
-    # Obtener resultados de búsqueda
-    search_results = search_local.search(state.search_query, num_search=3)
+    # Verificar si el path está definido en la configuración
+    if not hasattr(configurable, 'path') or not configurable.path:
+        print("ERROR: La ruta de documentos (path) no está definida en la configuración")
+        return {
+            "sources_gathered": ["Error: No se encontró la ruta de documentos."], 
+            "research_loop_count": state.research_loop_count + 1, 
+            "web_research_results": ["No se pudieron buscar documentos debido a que la ruta no está configurada."]
+        }
     
-    # Limpiar los resultados si son un diccionario
-    if isinstance(search_results, dict):
-        # Cambiado 'url' por 'path' en el comentario para mayor claridad
-        cleaned_results = {path: clean_text(content) for path, content in search_results.items()}
-    # Si es una lista de resultados
-    elif isinstance(search_results, list):
-        cleaned_results = [clean_text(result) if isinstance(result, str) else result for result in search_results]
-    else:
-        # Si es un string
-        cleaned_results = clean_text(search_results)
+    print(f"Buscando en ruta: {configurable.path}")
+    try:
+        search_local = LocalSearchEngine(configurable.path)
+        
+        if isinstance(state.search_query, dict):
+            search_query = state.search_query.get("query", "")
+        else:
+            search_query = state.search_query
+            
+        print(f"Consulta de búsqueda: '{search_query}'")
+        
+        # Obtener resultados de búsqueda
+        search_results = search_local.search(search_query, num_search=15, fallback_to_words=True)
+        print(f"Resultados de búsqueda encontrados: {len(search_results) if isinstance(search_results, dict) else 'Ninguno'}")
+        
+        # Si no hay resultados, devolver mensaje claro
+        if not search_results or (isinstance(search_results, dict) and len(search_results) == 0):
+            print("ADVERTENCIA: No se encontraron documentos para esta consulta")
+            return {
+                "sources_gathered": [f"No se encontraron documentos para la consulta: '{search_query}'"], 
+                "research_loop_count": state.research_loop_count + 1, 
+                "web_research_results": [f"No se encontraron documentos relevantes para la consulta: '{search_query}'. Intente con términos más generales o verifique que los documentos estén correctamente indexados."]
+            }
+        
+        # Procesar los resultados
+        if isinstance(search_results, dict):
+            cleaned_results = {path: clean_text(content) for path, content in search_results.items()}
+        elif isinstance(search_results, list):
+            cleaned_results = [clean_text(result) if isinstance(result, str) else result for result in search_results]
+        else:
+            cleaned_results = clean_text(search_results)
 
-    # Formatear los resultados limpios
-    search_str = deduplicate_and_format_sources(cleaned_results, max_tokens_per_source=1000, include_raw_content=True)
-
-    return {
-        "sources_gathered": [format_sources(cleaned_results)], 
-        "research_loop_count": state.research_loop_count + 1, 
-        "web_research_results": [search_str]
-    }
+        search_str = deduplicate_and_format_sources(cleaned_results, max_tokens_per_source=1000, include_raw_content=True)
+        print(f"Resultados formateados con éxito. Longitud: {len(search_str)}")
+        
+        return {
+            "sources_gathered": [format_sources(cleaned_results)], 
+            "research_loop_count": state.research_loop_count + 1, 
+            "web_research_results": [search_str]
+        }
+        
+    except Exception as e:
+        print(f"ERROR en búsqueda local: {str(e)}")
+        return {
+            "sources_gathered": [f"Error en búsqueda: {str(e)}"], 
+            "research_loop_count": state.research_loop_count + 1, 
+            "web_research_results": [f"Ocurrió un error durante la búsqueda de documentos: {str(e)}"]
+        }
 
 def SummarizeSources(state: SummaryState, config: RunnableConfig):
     """ Summarize the gathered sources """
@@ -199,6 +240,7 @@ def ReflectOnSummary(state: SummaryState, config: RunnableConfig):
             return {"search_query": f"Tell me more about {state.research_topic}"}
         
         query = follow_up_query.get('follow_up_query')
+        query = clean_text2(query)
         
         if not query:
             return {"search_query": f"Tell me more about {state.research_topic}"}
@@ -229,7 +271,60 @@ def clean_text(text: str) -> str:
         '\xa0': ' ',   # Espacio no rompible
         '\n': ' ',     # Saltos de línea
         '\t': ' ',     # Tabulaciones
-        '  ': ' '      # Espacios dobles
+        '  ': ' ',      # Espacios dobles
+        '?' : ' ',      # Signos de interrogación
+        '¿' : ' ',      # Signos de interrogación
+        '!' : ' ',      # Signos de exclamación
+        '¡' : ' ',      # Signos de exclamación
+        ':' : ' '      # Dos puntos
+    }
+    
+    for old, new in replacements.items():
+        text = text.replace(old, new)
+    
+    # Eliminar espacios múltiples
+    while '  ' in text:
+        text = text.replace('  ', ' ')
+    
+    return text.strip()
+
+def clean_text2(text: str) -> str:
+    """Limpia y normaliza el texto de la búsqueda"""
+    try:
+        # Decodificar caracteres especiales
+        text = text.encode('latin1').decode('utf-8')
+    except:
+        try:
+            # Si falla el primer método, intentar con otra codificación
+            text = text.encode('utf-8').decode('utf-8')
+        except:
+            pass
+    
+    # Reemplazar secuencias problemáticas comunes
+    replacements = {
+        'Â\xa0': ' ',  # Espacio no rompible
+        '\xa0': ' ',   # Espacio no rompible
+        '\n': ' ',     # Saltos de línea
+        '\t': ' ',     # Tabulaciones
+        '  ': ' ',      # Espacios dobles
+        '?' : ' ',      # Signos de interrogación
+        '¿' : ' ',      # Signos de interrogación
+        '!' : ' ',      # Signos de exclamación
+        '¡' : ' ',      # Signos de exclamación
+        ':' : ' ',      # Dos puntos
+        '.' : ' ',      # Puntos
+        ',' : ' ',      # Comas
+        ';' : ' ',      # Puntos y comas
+        '(' : ' ',      # Paréntesis
+        ')' : ' ',      # Paréntesis
+        '[' : ' ',      # Corchetes
+        ']' : ' ',      # Corchetes
+        '{' : ' ',      # Llaves
+        '}' : ' ',      # Llaves
+        '...' : ' ',    # Puntos suspensivos
+        ',': ' ',       # Comas
+        '-': ' ',       # Guiones
+        '_': ' ',       # Guiones bajos
     }
     
     for old, new in replacements.items():
