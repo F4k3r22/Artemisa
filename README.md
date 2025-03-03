@@ -77,3 +77,11 @@ El proyecto se encuentra en desarrollo activo, con énfasis en:
 - Expansión de compatibilidad con modelos OpenAI
 - Pruebas exhaustivas con la API de Anthropic
 - Optimización de procesamiento local con Ollama
+
+# Donaciones 💸
+
+Si deseas apoyar este proyecto, puedes hacer una donación a través de PayPal:
+
+[![Donate with PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/donate?hosted_button_id=KZZ88H2ME98ZG)
+
+Tu donativo permite mantener y expandir nuestros proyectos de código abierto en beneficio de toda la comunidad.
