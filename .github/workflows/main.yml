@@ -1,0 +1,15 @@
+name: Ping URL
+
+on:
+  schedule:
+    - cron: '*/1 * * * *'  # se ejecuta cada minuto (GitHub Actions admite como mínimo 1 minuto)
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2  # este job se cancela después de 2 minutos
+    steps:
+      - name: Ping URL (JavaScript action)
+        uses: soul-wish/ping-url-javascript-action@v1.3
+        with:
+          url: 'https://avellaneda-stoikov-binance.onrender.com'
