@@ -11,7 +11,7 @@ dependencies = [
     "openpyxl", 
     "python-docx", 
     "python-pptx", 
-    "pdfplumber",
+    "PyMuPDF",
     "openai",
     "huggingface_hub",
     "google-genai",
